@@ -22,14 +22,14 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.capmc
+Unit tests for csm_api_client.service.capmc
 """
 
 import logging
 import unittest
 from unittest import mock
 
-from sat.apiclient import APIError, APIGatewayClient, CAPMCClient, CAPMCError
+from csm_api_client.service import APIError, APIGatewayClient, CAPMCClient, CAPMCError
 from tests.common import ExtendedTestCase
 
 

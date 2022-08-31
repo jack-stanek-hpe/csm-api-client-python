@@ -22,14 +22,14 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.fabric
+Unit tests for csm_api_client.service.fabric
 """
 
 import logging
 import unittest
 from unittest import mock
 
-from sat.apiclient import APIError, APIGatewayClient, FabricControllerClient
+from csm_api_client.service import APIError, APIGatewayClient, FabricControllerClient
 from tests.common import ExtendedTestCase
 
 
@@ -37,7 +37,7 @@ class TestFabricControllerClient(ExtendedTestCase):
     """Tests for the APIGatewayClient class: Fabric Controller client."""
 
     def setUp(self):
-        mock.patch('sat.apiclient.gateway.get_config_value').start()
+        mock.patch('csm_api_client.service.gateway.get_config_value').start()
 
         self.mock_port_sets = {
             'fabric-ports': {'ports': ['x3000c0r24j4p0', 'x3000c0r24j4p1']},

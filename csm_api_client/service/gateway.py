@@ -29,7 +29,8 @@ import logging
 import requests
 from urllib.parse import urlunparse
 
-from sat.config import get_config_value
+from csm_api_client.session import Session
+
 
 LOGGER = logging.getLogger(__name__)
 

@@ -25,17 +25,17 @@
 Client for querying the API gateway.
 """
 # Import these names so that they can still be imported from the apiclient package directly
-from sat.apiclient.bos import BOSV1Client
-from sat.apiclient.capmc import CAPMCClient, CAPMCError
-from sat.apiclient.cfs import CFSClient
-from sat.apiclient.fabric import FabricControllerClient
-from sat.apiclient.fas import FASClient
-from sat.apiclient.fox import FoxClient
-from sat.apiclient.gateway import APIError, APIGatewayClient, ReadTimeout
-from sat.apiclient.hsm import HSMClient
-from sat.apiclient.ims import IMSClient
-from sat.apiclient.sls import SLSClient
-from sat.apiclient.telemetry import TelemetryAPIClient
+from csm_api_client.service.bos import BOSV1Client
+from csm_api_client.service.capmc import CAPMCClient, CAPMCError
+from csm_api_client.service.cfs import CFSClient
+from csm_api_client.service.fabric import FabricControllerClient
+from csm_api_client.service.fas import FASClient
+from csm_api_client.service.fox import FoxClient
+from csm_api_client.service.gateway import APIError, APIGatewayClient, ReadTimeout
+from csm_api_client.service.hsm import HSMClient
+from csm_api_client.service.ims import IMSClient
+from csm_api_client.service.sls import SLSClient
+from csm_api_client.service.telemetry import TelemetryAPIClient
 
 
 # The following simple API clients for CRUS, NMD, and SCSD only define their

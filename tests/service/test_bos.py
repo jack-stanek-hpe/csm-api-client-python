@@ -22,12 +22,12 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.bos
+Unit tests for csm_api_client.service.bos
 """
 import unittest
 from unittest.mock import MagicMock, patch
 
-from sat.apiclient.bos import (
+from csm_api_client.service.bos import (
     BOSClientCommon,
     BOSV1Client,
     BOSV2Client,
@@ -38,7 +38,7 @@ class BOSClientTestCase(unittest.TestCase):
     """Base test case for BOS client tests"""
 
     def setUp(self):
-        self.mock_get_config = patch('sat.apiclient.bos.get_config_value').start()
+        self.mock_get_config = patch('csm_api_client.service.bos.get_config_value').start()
 
     def tearDown(self):
         patch.stopall()

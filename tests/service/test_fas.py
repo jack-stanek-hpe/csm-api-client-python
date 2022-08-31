@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.fas
+Unit tests for csm_api_client.service.fas
 """
 
 import copy
@@ -32,8 +32,8 @@ import logging
 import unittest
 from unittest.mock import call, Mock, patch
 
-from sat.apiclient import APIError, APIGatewayClient
-from sat.apiclient.fas import _DateTimeEncoder, FASClient, _now_and_later
+from csm_api_client.service import APIError, APIGatewayClient
+from csm_api_client.service.fas import _DateTimeEncoder, FASClient, _now_and_later
 from sat.xname import XName
 from tests.test_util import ExtendedTestCase
 
@@ -119,9 +119,9 @@ class TestFASClient(ExtendedTestCase):
         self.mock_get = patch.object(APIGatewayClient, 'get', side_effect=self.mock_api_get).start()
         self.mock_post = patch.object(APIGatewayClient, 'post').start()
         # Functions that sleep do not need to sleep.
-        patch('sat.apiclient.fas.time.sleep').start()
+        patch('csm_api_client.service.fas.time.sleep').start()
         # Mock datetime.utcnow() so the return values of _now_and_later are consistent
-        patch('sat.apiclient.fas.datetime.utcnow', return_value=datetime(2021, 3, 7, 23, 35, 0, 403824))
+        patch('csm_api_client.service.fas.datetime.utcnow', return_value=datetime(2021, 3, 7, 23, 35, 0, 403824))
         self.json_exception = None
 
     def mock_api_get(self, resource, name=None):
@@ -616,7 +616,7 @@ class TestFASClient(ExtendedTestCase):
                     [XName('x3000c0r15b0'), 'FPGA0', '', '2.00'],
                     [XName('x3000c0s17b1'), '8', 'BMC', '1.01'],
                     [XName('x3000c0s17b1'), '10', 'FPGA0', '2.01']]
-        with patch('sat.apiclient.fas.LOGGER.error') as logs_error:
+        with patch('csm_api_client.service.fas.LOGGER.error') as logs_error:
             result = self.fas_client.make_fw_table(
                 self.fas_firmware_devices['full_snap']['devices']
             )
@@ -644,7 +644,7 @@ class TestFASClient(ExtendedTestCase):
                     [XName('x3000c0r15b0'), 'FPGA0', '', '2.00'],
                     [XName('x3000c0s17b1'), '8', 'BMC', '1.01'],
                     [XName('x3000c0s17b1'), '10', 'FPGA0', '2.01']]
-        with patch('sat.apiclient.fas.LOGGER.error') as logs_error:
+        with patch('csm_api_client.service.fas.LOGGER.error') as logs_error:
             result = self.fas_client.make_fw_table(
                 self.fas_firmware_devices['full_snap']['devices']
             )
@@ -657,7 +657,7 @@ class TestFASClient(ExtendedTestCase):
         self.fas_firmware_devices['full_snap']['devices'][0]['targets'] = []
         expected = [[XName('x3000c0s17b1'), '8', 'BMC', '1.01'],
                     [XName('x3000c0s17b1'), '10', 'FPGA0', '2.01']]
-        with patch('sat.apiclient.fas.LOGGER') as logger:
+        with patch('csm_api_client.service.fas.LOGGER') as logger:
             result = self.fas_client.make_fw_table(
                 self.fas_firmware_devices['full_snap']['devices']
             )

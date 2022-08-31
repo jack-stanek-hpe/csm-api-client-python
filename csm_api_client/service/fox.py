@@ -28,7 +28,7 @@ API Client for the Fox service, which provides indirect access to HMJTD.
 import json
 import logging
 
-from sat.apiclient.gateway import APIError, APIGatewayClient
+from csm_api_client.service.gateway import APIError, APIGatewayClient
 
 
 LOGGER = logging.getLogger(__name__)

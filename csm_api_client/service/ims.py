@@ -42,7 +42,7 @@ from kubernetes.config import load_kube_config, ConfigException
 from urllib3.exceptions import InsecureRequestWarning
 from yaml import YAMLLoadWarning
 
-from sat.apiclient.gateway import APIGatewayClient, APIError
+from csm_api_client.service.gateway import APIGatewayClient, APIError
 from sat.cached_property import cached_property
 from sat.config import get_config_value
 from sat.util import get_val_by_path

@@ -31,7 +31,7 @@ from datetime import datetime, timedelta
 
 import inflect
 
-from sat.apiclient.gateway import APIGatewayClient, APIError
+from csm_api_client.service.gateway import APIGatewayClient, APIError
 from sat.constants import MISSING_VALUE
 from sat.xname import XName
 

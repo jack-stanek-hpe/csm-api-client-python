@@ -33,8 +33,8 @@ import uuid
 
 from kubernetes.client import ApiException
 
-from sat.apiclient.gateway import APIError, APIGatewayClient
-from sat.util import get_val_by_path
+from csm_api_client.service.gateway import APIError, APIGatewayClient
+from csm_api_client.util import get_val_by_path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ class CFSImageConfigurationSession:
 
     Attributes:
         data (dict): the data from the CFS API for this session
-        cfs_client (sat.apiclient.cfs.CFSClient): the CFS API client used to
+        cfs_client (csm_api_client.service.cfs.CFSClient): the CFS API client used to
             create the session and to use to query the session status
         image_name (str): the name specified for the image in a bootprep input
             file. Currently only used for logging, but may be used when creating
@@ -213,7 +213,7 @@ class CFSImageConfigurationSession:
 
         Args:
             data (dict): the data from the CFS API for this session
-            cfs_client (sat.apiclient.cfs.CFSClient): the CFS API client used to
+            cfs_client (csm_api_client.service.cfs.CFSClient): the CFS API client used to
                 create the session and to use to query the session status
             image_name (str): the name specified for the image in a bootprep
                 input file.

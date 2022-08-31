@@ -22,14 +22,14 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.hsm
+Unit tests for csm_api_client.service.hsm
 """
 
 import logging
 import unittest
 from unittest import mock
 
-from sat.apiclient import APIError, APIGatewayClient, HSMClient
+from csm_api_client.service import APIError, APIGatewayClient, HSMClient
 from tests.common import ExtendedTestCase
 
 
@@ -157,7 +157,7 @@ class TestHSMClientRedfishEndpoints(ExtendedTestCase):
                 }
             ]
         }
-        mock.patch('sat.apiclient.gateway.get_config_value').start()
+        mock.patch('csm_api_client.service.gateway.get_config_value').start()
         self.hsm_client = HSMClient()
 
     def tearDown(self):
@@ -204,7 +204,7 @@ class TestHSMClientRedfishEndpoints(ExtendedTestCase):
             ]
         }
 
-        def _fake_get(*args, params):
+        def _fake_get(*_, params):
             if params.get('type') == 'ChassisBMC':
                 return chassis_response
             return router_response

@@ -26,7 +26,7 @@ Client for querying the Cray Shasta Telemetry API
 """
 import logging
 
-from sat.apiclient.gateway import APIError, APIGatewayClient, ReadTimeout
+from csm_api_client.service.gateway import APIError, APIGatewayClient, ReadTimeout
 
 LOGGER = logging.getLogger(__name__)
 

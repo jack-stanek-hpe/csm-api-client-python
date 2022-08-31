@@ -22,16 +22,15 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.gateway
+Unit tests for csm_api_client.service.gateway
 """
 from unittest import mock
 import unittest
 
 import requests
 
-import sat.apiclient
-import sat.config
-from sat.apiclient import APIError
+import csm_api_client.service
+from csm_api_client.service import APIError
 
 
 def get_http_url_prefix(hostname):
@@ -42,46 +41,39 @@ def get_http_url_prefix(hostname):
 class TestAPIGatewayClient(unittest.TestCase):
     """Tests for the APIGatewayClient class."""
 
-    def setUp(self):
-        self.stored_config = sat.config.CONFIG
-        sat.config.CONFIG = sat.config.SATConfig('')
-
-    def tearDown(self):
-        sat.config.CONFIG = self.stored_config
-
     def test_create_without_host(self):
         """Test creation of APIGatewayClient w/o host."""
         default_host = 'default-api-gw'
-        with mock.patch('sat.apiclient.gateway.get_config_value', return_value=default_host):
-            client = sat.apiclient.APIGatewayClient()
+        with mock.patch('csm_api_client.service.gateway.get_config_value', return_value=default_host):
+            client = csm_api_client.service.APIGatewayClient()
 
         self.assertEqual(client.host, default_host)
 
     def test_create_with_host(self):
         """Test creation of APIGatewayClient w/ host."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         self.assertEqual(client.host, api_gw_host)
 
     def test_configured_timeout(self):
         """Make sure the API client timeout is configurable by the config file."""
-        with mock.patch('sat.apiclient.gateway.get_config_value') as mock_config:
+        with mock.patch('csm_api_client.service.gateway.get_config_value') as mock_config:
             for configured_timeout in range(10, 60, 10):
                 mock_config.return_value = configured_timeout
-                client = sat.apiclient.APIGatewayClient()
+                client = csm_api_client.service.APIGatewayClient()
                 self.assertEqual(client.timeout, configured_timeout)
 
     def test_setting_timeout_with_constructor(self):
         """Test setting the API client timeout with the constructor argument."""
-        with mock.patch('sat.apiclient.gateway.get_config_value', return_value=120):
-            client = sat.apiclient.APIGatewayClient(timeout=60)
+        with mock.patch('csm_api_client.service.gateway.get_config_value', return_value=120):
+            client = csm_api_client.service.APIGatewayClient(timeout=60)
             self.assertEqual(client.timeout, 60)
 
     @mock.patch('requests.get')
     def test_get_no_params(self, mock_requests_get):
         """Test get method with no additional params."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         response = client.get(*path_components)
 
@@ -95,7 +87,7 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_get_with_params(self, mock_requests_get):
         """Test get method with additional params."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['People']
         params = {'name': 'ryan'}
         response = client.get(*path_components, params=params)
@@ -110,16 +102,16 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_get_exception(self, _):
         """Test get method with exception during GET."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
-        with self.assertRaises(sat.apiclient.APIError):
+        with self.assertRaises(csm_api_client.service.APIError):
             client.get(*path_components)
 
     @mock.patch('requests.post')
     def test_post(self, mock_requests_post):
         """Test post method."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         response = client.post(*path_components, payload=payload)
@@ -134,17 +126,17 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_post_exception(self, _):
         """Test post method with exception during POST."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
-        with self.assertRaises(sat.apiclient.APIError):
+        with self.assertRaises(csm_api_client.service.APIError):
             client.post(*path_components, payload=payload)
 
     @mock.patch('requests.put')
     def test_put(self, mock_requests_put):
         """Test put method."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         client.put(*path_components, payload=payload)
@@ -158,17 +150,17 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_put_exception(self, _):
         """Test put method with exception during PUT."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
-        with self.assertRaises(sat.apiclient.APIError):
+        with self.assertRaises(csm_api_client.service.APIError):
             client.put(*path_components, payload=payload)
 
     @mock.patch('requests.delete')
     def test_delete(self, mock_requests_delete):
         """Test delete method."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
         response = client.delete(*path_components)
 
@@ -182,15 +174,15 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_delete_exception(self, _):
         """Test delete method with exception during DELETE."""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path_components = ['foo', 'bar', 'baz']
-        with self.assertRaises(sat.apiclient.APIError):
+        with self.assertRaises(csm_api_client.service.APIError):
             client.delete(*path_components)
 
     def test_request_failed_with_problem_description(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and additional problem details"""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path = 'fail'
         expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
         status_code = 400
@@ -218,7 +210,7 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_request_failed_no_problem_description(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and no problem details"""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path = 'fail'
         expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
         status_code = 400
@@ -241,7 +233,7 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_request_failed_invalid_json_response(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and response not valid JSON"""
         api_gw_host = 'my-api-gw'
-        client = sat.apiclient.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
         path = 'fail'
         expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
         status_code = 400

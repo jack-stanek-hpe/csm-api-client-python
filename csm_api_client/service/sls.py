@@ -26,7 +26,7 @@ Client for querying the System Layout Service (SLS) API
 """
 import logging
 
-from sat.apiclient.gateway import APIError, APIGatewayClient
+from csm_api_client.service.gateway import APIError, APIGatewayClient
 
 LOGGER = logging.getLogger(__name__)
 

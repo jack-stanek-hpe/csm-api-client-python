@@ -26,8 +26,9 @@ Client for querying the Boot Orchestration Service (BOS) API
 """
 import logging
 
-from sat.apiclient.gateway import APIError, APIGatewayClient
-from sat.config import get_config_value
+from csm_api_client.session import Session
+from csm_api_client.service.gateway import APIError, APIGatewayClient
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ class BOSClientCommon(APIGatewayClient):
         self.post(self.session_template_path, json=session_template_data)
 
     @staticmethod
-    def get_bos_client(session, version=None, **kwargs):
+    def get_bos_client(session: Session, version=None, **kwargs):
         """Instantiate a BOSVxClient for the given API version.
 
         Args:

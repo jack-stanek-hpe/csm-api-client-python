@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 """
-Unit tests for sat.apiclient.fox
+Unit tests for csm_api_client.service.fox
 """
 
 from copy import deepcopy
@@ -41,8 +41,8 @@ from tests.cli.diag.fakes import (
     MOCK_XNAMES
 )
 
-from sat.apiclient import APIGatewayClient, APIError
-from sat.apiclient import FoxClient
+from csm_api_client.service import APIGatewayClient, APIError
+from csm_api_client.service import FoxClient
 
 
 class TestFoxClient(ExtendedTestCase):

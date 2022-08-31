@@ -26,7 +26,7 @@ Client for querying the Hardware State Manager (HSM) API
 """
 import logging
 
-from sat.apiclient.gateway import (
+from csm_api_client.service.gateway import (
     APIError,
     APIGatewayClient,
     handle_api_errors,
