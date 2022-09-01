@@ -34,7 +34,7 @@ from unittest.mock import call, Mock, patch
 
 from csm_api_client.service import APIError, APIGatewayClient
 from csm_api_client.service.fas import _DateTimeEncoder, FASClient, _now_and_later
-from sat.xname import XName
+from csm_api_client.xname import XName
 from tests.test_util import ExtendedTestCase
 
 

@@ -157,7 +157,6 @@ class TestHSMClientRedfishEndpoints(ExtendedTestCase):
                 }
             ]
         }
-        mock.patch('csm_api_client.service.gateway.get_config_value').start()
         self.hsm_client = HSMClient()
 
     def tearDown(self):

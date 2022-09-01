@@ -44,8 +44,7 @@ class TestAPIGatewayClient(unittest.TestCase):
     def test_create_without_host(self):
         """Test creation of APIGatewayClient w/o host."""
         default_host = 'default-api-gw'
-        with mock.patch('csm_api_client.service.gateway.get_config_value', return_value=default_host):
-            client = csm_api_client.service.APIGatewayClient()
+        client = csm_api_client.service.APIGatewayClient()
 
         self.assertEqual(client.host, default_host)
 
@@ -57,17 +56,15 @@ class TestAPIGatewayClient(unittest.TestCase):
 
     def test_configured_timeout(self):
         """Make sure the API client timeout is configurable by the config file."""
-        with mock.patch('csm_api_client.service.gateway.get_config_value') as mock_config:
-            for configured_timeout in range(10, 60, 10):
-                mock_config.return_value = configured_timeout
-                client = csm_api_client.service.APIGatewayClient()
-                self.assertEqual(client.timeout, configured_timeout)
+        for configured_timeout in range(10, 60, 10):
+            mock_config.return_value = configured_timeout
+            client = csm_api_client.service.APIGatewayClient()
+            self.assertEqual(client.timeout, configured_timeout)
 
     def test_setting_timeout_with_constructor(self):
         """Test setting the API client timeout with the constructor argument."""
-        with mock.patch('csm_api_client.service.gateway.get_config_value', return_value=120):
-            client = csm_api_client.service.APIGatewayClient(timeout=60)
-            self.assertEqual(client.timeout, 60)
+        client = csm_api_client.service.APIGatewayClient(timeout=60)
+        self.assertEqual(client.timeout, 60)
 
     @mock.patch('requests.get')
     def test_get_no_params(self, mock_requests_get):

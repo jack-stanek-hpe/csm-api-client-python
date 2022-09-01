@@ -27,6 +27,7 @@ Client for querying the Image Management Service (IMS) API
 import base64
 import copy
 import datetime
+from functools import cached_property
 import hashlib
 import json
 import logging
@@ -43,9 +44,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from yaml import YAMLLoadWarning
 
 from csm_api_client.service.gateway import APIGatewayClient, APIError
-from sat.cached_property import cached_property
-from sat.config import get_config_value
-from sat.util import get_val_by_path
+from csm_api_client.util import get_val_by_path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,11 +55,12 @@ class IMSClient(APIGatewayClient):
     # The bucket for boot images created by IMS
     boot_images_bucket = 'boot-images'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, s3_endpoint: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Dictionary to cache the list of different types of resources from IMS
         self._cached_resources = {}
         self.inflector = engine()
+        self.s3_endpoint = s3_endpoint
 
     @cached_property
     def s3_credentials(self):
@@ -115,7 +115,7 @@ class IMSClient(APIGatewayClient):
             # TODO (CRAYSAT-926): Start verifying HTTPS requests (remove verify=False)
             return boto3.resource(
                 's3',
-                endpoint_url=get_config_value('s3.endpoint'),
+                endpoint_url=self.s3_endpoint,
                 aws_access_key_id=access_key,
                 aws_secret_access_key=secret_key,
                 region_name='',
@@ -336,7 +336,7 @@ class IMSClient(APIGatewayClient):
             tuple: a tuple consisting of the S3 bucket name and the path to the
                 object in that bucket, e.g. ('boot-images', '<UUID>/rootfs').
         """
-        s3_host, bucket_path = path.split('://')
+        _, bucket_path = path.split('://')
         return bucket_path.split('/', maxsplit=1)
 
     def get_image_manifest(self, image_id):
@@ -358,7 +358,7 @@ class IMSClient(APIGatewayClient):
         if not s3_manifest_path:
             return None
 
-        with TemporaryDirectory(prefix='sat-ims-manifest') as tempdir:
+        with TemporaryDirectory(prefix='ims-manifest') as tempdir:
             local_manifest_path = os.path.join(tempdir, 'manifest.json')
             LOGGER.debug(f'Downloading manifest file for image with id {image_id} '
                          f'to {local_manifest_path}')
@@ -469,7 +469,7 @@ class IMSClient(APIGatewayClient):
         Raises:
             APIError: if the image manifest cannot be uploaded to S3
         """
-        with TemporaryDirectory(prefix='sat-ims-manifest') as tempdir:
+        with TemporaryDirectory(prefix='ims-manifest') as tempdir:
             local_manifest_path = os.path.join(tempdir, 'manifest.json')
             try:
                 with open(local_manifest_path, 'w') as new_manifest_file:

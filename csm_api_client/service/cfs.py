@@ -45,7 +45,7 @@ class CFSClient(APIGatewayClient):
     MAX_SESSION_NAME_LENGTH = 45
 
     @staticmethod
-    def get_valid_session_name(prefix='sat'):
+    def get_valid_session_name(prefix: str):
         """Get a valid CFS session name.
 
         CFS session names are restricted by Kubernetes naming conventions, and

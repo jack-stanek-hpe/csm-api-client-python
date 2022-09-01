@@ -25,6 +25,7 @@
 OAuth2 authentication support.
 """
 
+from functools import cached_property
 import json
 import logging
 import os.path
@@ -34,35 +35,36 @@ from oauthlib.oauth2 import (UnauthorizedClientError, MissingTokenError,
                              InvalidGrantError, LegacyApplicationClient)
 from requests_oauthlib import OAuth2Session
 
-from sat.cached_property import cached_property
-from sat.config import get_config_value
-from sat.util import get_resource_filename
-
 
 LOGGER = logging.getLogger(__name__)
 
 
-class SATSession:
+class Session:
     """Manage API sessions, authentication, and token storage/retrieval."""
 
     TOKEN_URI = '/keycloak/realms/{}/protocol/openid-connect/token'
     tenant = 'shasta'
     client_id = 'shasta'
 
-    def __init__(self, no_unauth_warn=False):
+    def __init__(self, host: str, cert_verify: bool, username: str, token_filename: str,
+                 no_unauth_warn=False):
         """Initialize a Session. Wraps an OAuth2Session.
 
         Parameter management. Initialization of the OAuth2Session passes to
         self.get_session().
 
         Args:
+            host: the API gateway hostname
+            cert_verify: if True, verify TLS ceriticates when connecting. If
+                False, skip ceritificate verification.
+            username: the username whose token to use when authenticating
             no_unauth_warn (bool): Suppress session-is-not-authorized warning.
-                used when fetching a new token with "sat auth".
         """
 
-        self.host = get_config_value('api_gateway.host')
-        self.cert_verify = get_config_value('api_gateway.cert_verify')
-        self.username = get_config_value('api_gateway.username')
+        self.host = host
+        self.cert_verify = cert_verify
+        self.username = username
+        self.token_filename = token_filename
 
         opts = self.session_opts
         token = self.token
@@ -78,19 +80,6 @@ class SATSession:
                                'subcommand, or use --token-file on the command line.')
 
         self.session = OAuth2Session(client=client, token=token, **opts)
-
-    @property
-    def token_filename(self):
-        """str: Filename of authentication token
-        """
-
-        token_filename = get_config_value('api_gateway.token_file')
-        if token_filename == '':
-            host_as_filename = self.host.replace('-', '_').replace('.', '_')
-            token_filename = get_resource_filename(
-                '{}.{}.json'.format(host_as_filename, self.username), 'tokens')
-
-        return token_filename
 
     @cached_property
     def token(self):
@@ -148,20 +137,18 @@ class SATSession:
             token (dict): Authentication token
         """
 
-        username = self.username
-
         opts = dict(client_id=self.client_id, verify=self.cert_verify)
         opts.update(self.session_opts)
 
         try:
             self._token = self.session.fetch_token(token_url=self.token_url,
-                                                   username=username, password=password, **opts)
+                                                   username=self.username, password=password, **opts)
         except (MissingTokenError, UnauthorizedClientError, InvalidGrantError) as err:
             # Avoid recording the authenticated user in the log file
-            print(f"ERROR: Authorization of user '{username}' failed: {err}.")
+            print(f"ERROR: Authorization of user '{self.username}' failed: {err}.")
             self._token = None
         else:
-            print(f"INFO: Acquired new auth token for user '{username}'.")
+            print(f"INFO: Acquired new auth token for user '{self.username}'.")
 
     @cached_property
     def session_opts(self):

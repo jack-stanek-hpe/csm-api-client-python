@@ -27,7 +27,7 @@ Class for representing an xname.
 import re
 from collections import OrderedDict
 
-from sat.cached_property import cached_property
+from functools import cached_property
 
 
 class XName:

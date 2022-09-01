@@ -27,7 +27,7 @@ Client for querying the fabric manager API
 import logging
 
 from csm_api_client.service.gateway import APIError, APIGatewayClient
-from sat.util import get_val_by_path
+from csm_api_client.util import get_val_by_path
 
 
 LOGGER = logging.getLogger(__name__)

@@ -37,7 +37,6 @@ class TestFabricControllerClient(ExtendedTestCase):
     """Tests for the APIGatewayClient class: Fabric Controller client."""
 
     def setUp(self):
-        mock.patch('csm_api_client.service.gateway.get_config_value').start()
 
         self.mock_port_sets = {
             'fabric-ports': {'ports': ['x3000c0r24j4p0', 'x3000c0r24j4p1']},

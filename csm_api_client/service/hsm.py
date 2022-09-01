@@ -31,9 +31,10 @@ from csm_api_client.service.gateway import (
     APIGatewayClient,
     handle_api_errors,
 )
-from sat.constants import BMC_TYPES
-from sat.xname import XName
+from csm_api_client.xname import XName
 
+
+BMC_TYPES = ('NodeBMC', 'RouterBMC', 'ChassisBMC')
 LOGGER = logging.getLogger(__name__)
 
 

@@ -25,23 +25,18 @@
 Unit tests for csm_api_client.service.bos
 """
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from csm_api_client.service.bos import (
     BOSClientCommon,
     BOSV1Client,
     BOSV2Client,
+    BOSVersion,
 )
 
 
 class BOSClientTestCase(unittest.TestCase):
     """Base test case for BOS client tests"""
-
-    def setUp(self):
-        self.mock_get_config = patch('csm_api_client.service.bos.get_config_value').start()
-
-    def tearDown(self):
-        patch.stopall()
 
 
 class TestBOSClientCommon(BOSClientTestCase):
@@ -49,20 +44,17 @@ class TestBOSClientCommon(BOSClientTestCase):
 
     def test_get_bos_version_v1(self):
         """Test retrieving a BOSV1Client"""
-        self.mock_get_config.return_value = 'v1'
         self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock()),
                               BOSV1Client)
 
     def test_get_bos_version_v2(self):
         """Test retrieving a BOSV2Client"""
-        self.mock_get_config.return_value = 'v2'
         self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock()),
                               BOSV2Client)
 
     def test_get_invalid_bos_client(self):
         """Test retrieving an invalid BOS client version throws an error"""
         for invalid_bos_version in ['v3', 'foo', 'v0', '']:
-            self.mock_get_config.return_value = invalid_bos_version
             with self.assertRaises(ValueError):
                 BOSClientCommon.get_bos_client(MagicMock())
 
@@ -78,7 +70,6 @@ class TestBOSClientCommon(BOSClientTestCase):
     def test_get_bos_client_version_kwarg_is_none(self):
         """Test that the client version is read from config file when version kwarg is None"""
         for version, client_cls in [('v1', BOSV1Client), ('v2', BOSV2Client)]:
-            self.mock_get_config.return_value = version
             with self.subTest(version=version):
                 self.assertIsInstance(
                     BOSClientCommon.get_bos_client(MagicMock(), version=None),
@@ -88,10 +79,6 @@ class TestBOSClientCommon(BOSClientTestCase):
 
 class TestBOSV1BaseBootSetData(BOSClientTestCase):
     """Test BOSV1Client.get_base_boot_set_data() """
-
-    def setUp(self):
-        super().setUp()
-        self.mock_get_config.return_value = 'v1'
 
     def test_bos_v1_client_has_correct_keys(self):
         """Test that the BOS v1 base boot set data has the correct keys"""
@@ -109,10 +96,6 @@ class TestBOSV1BaseBootSetData(BOSClientTestCase):
 
 class TestBOSV2BaseBootSetData(BOSClientTestCase):
     """Test BOSV2Client.get_base_boot_set_data() """
-
-    def setUp(self):
-        super().setUp()
-        self.mock_get_config.return_value = 'v2'
 
     def test_bos_v2_client_has_correct_keys(self):
         """Test that the BOS v2 base boot set data has the correct keys"""

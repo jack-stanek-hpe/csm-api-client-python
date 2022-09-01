@@ -24,13 +24,28 @@
 """
 Client for querying the Boot Orchestration Service (BOS) API
 """
+import enum
 import logging
+from typing import Optional
 
 from csm_api_client.session import Session
 from csm_api_client.service.gateway import APIError, APIGatewayClient
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+@enum.unique
+class BOSVersion(enum.Enum):
+    V1 = 'v1'
+    V2 = 'v2'
+
+    @classmethod
+    def from_str(cls, strval: str) -> Optional['BOSVersion']:
+        return {
+            'v1': cls.V1,
+            'v2': cls.V2,
+        }.get(strval.lower())
 
 
 class BOSClientCommon(APIGatewayClient):
@@ -102,7 +117,7 @@ class BOSClientCommon(APIGatewayClient):
         self.post(self.session_template_path, json=session_template_data)
 
     @staticmethod
-    def get_bos_client(session: Session, version=None, **kwargs):
+    def get_bos_client(session: Session, version: BOSVersion, **kwargs):
         """Instantiate a BOSVxClient for the given API version.
 
         Args:
@@ -120,15 +135,10 @@ class BOSClientCommon(APIGatewayClient):
         Raises:
             ValueError: if the given version string is not valid
         """
-        version = version or get_config_value('bos.api_version')
-
         bos_client_cls = {
-            'v1': BOSV1Client,
-            'v2': BOSV2Client,
-        }.get(version)
-
-        if bos_client_cls is None:
-            raise ValueError(f'Invalid BOS API version "{version}"')
+            BOSVersion.V1: BOSV1Client,
+            BOSVersion.V2: BOSV2Client,
+        }[version]
 
         return bos_client_cls(session, **kwargs)
 

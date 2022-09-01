@@ -29,6 +29,7 @@ Client for interacting with the Version Control Service (VCS).
 # and should be refactored into a common library.
 import base64
 from contextlib import contextmanager
+from functools import cached_property
 import logging
 import os
 import subprocess
@@ -37,8 +38,6 @@ from urllib.parse import urlparse, urlunparse
 
 from kubernetes.config import load_kube_config
 from kubernetes.client import CoreV1Api
-
-from sat.cached_property import cached_property
 
 
 LOGGER = logging.getLogger(__name__)

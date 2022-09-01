@@ -73,37 +73,14 @@ class APIGatewayClient:
     # This can be set in subclasses to make a client for a specific API
     base_resource_path = ''
 
-    def __init__(self, session=None, host=None, cert_verify=None, timeout=None):
+    def __init__(self, session: Session):
         """Initialize the APIGatewayClient.
 
         Args:
             session: The Session instance to use when making REST calls,
                 or None to make connections without a session.
-            host (str): The API gateway host.
-            cert_verify (bool): Whether to verify the gateway's certificate.
-            timeout (int): number of seconds to wait for a response before timing
-                out requests made to services behind the API gateway.
         """
-
-        # Inherit parameters from session if not passed as arguments
-        # If there is no session, get the values from configuration
-
-        if host is None:
-            if session is None:
-                host = get_config_value('api_gateway.host')
-            else:
-                host = session.host
-
-        if cert_verify is None:
-            if session is None:
-                cert_verify = get_config_value('api_gateway.cert_verify')
-            else:
-                cert_verify = session.cert_verify
-
         self.session = session
-        self.host = host
-        self.cert_verify = cert_verify
-        self.timeout = get_config_value('api_gateway.api_timeout') if timeout is None else timeout
 
     def set_timeout(self, timeout):
         self.timeout = timeout

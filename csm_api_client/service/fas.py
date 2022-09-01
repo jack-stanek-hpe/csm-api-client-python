@@ -32,8 +32,7 @@ from datetime import datetime, timedelta
 import inflect
 
 from csm_api_client.service.gateway import APIGatewayClient, APIError
-from sat.constants import MISSING_VALUE
-from sat.xname import XName
+from csm_api_client.xname import XName
 
 
 inf = inflect.engine()
@@ -100,13 +99,13 @@ class FASClient(APIGatewayClient):
         fw_dev_fields = [FASClient.name_field, FASClient.target_name_field, FASClient.version_field]
 
         if target.get('error'):  # Do not log an error if the error is just an empty string.
-            if xname == MISSING_VALUE:
+            if xname == 'MISSING':
                 LOGGER.warning('FAS returned an error while retrieving firmware from an unknown device')
                 return None
 
             LOGGER.error(
                 'Error getting firmware for %s target %s: %s', xname,
-                target.get(FASClient.name_field) or target.get(FASClient.target_name_field) or MISSING_VALUE,
+                target.get(FASClient.name_field) or target.get(FASClient.target_name_field) or 'MISSING',
                 target['error']
             )
             # In the event of an error, skip creating a row if either:
@@ -116,7 +115,7 @@ class FASClient(APIGatewayClient):
                                                                                       FASClient.target_name_field]):
                 return None
         # Use XName class so xnames sort properly.
-        return [XName(xname)] + [target.get(f, MISSING_VALUE) for f in fw_dev_fields]
+        return [XName(xname)] + [target.get(f, 'MISSING') for f in fw_dev_fields]
 
     @staticmethod
     def make_fw_table(fw_devs):
@@ -136,7 +135,7 @@ class FASClient(APIGatewayClient):
         """
         fw_table = []
         for fw_dev in fw_devs:
-            xname = fw_dev.get('xname', MISSING_VALUE)
+            xname = fw_dev.get('xname', 'MISSING')
             targets = fw_dev.get('targets')
             if fw_dev.get('error'):  # Do not log an error if the error is just an empty string.
                 LOGGER.error('Error getting firmware for %s: %s', xname, fw_dev['error'])

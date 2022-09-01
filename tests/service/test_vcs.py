@@ -37,7 +37,7 @@ from csm_api_client.service.vcs import VCSError, VCSRepo
 class TestVCSRepo(unittest.TestCase):
     """Tests for the VCSRepo class."""
     def setUp(self):
-        self.repo_name = 'sat-config-management'
+        self.repo_name = 'csm_api_client-config-management'
         self.repo_path = f'/vcs/cray/{self.repo_name}.git'
         self.vcs_host = 'api-gw-service-nmn.local'
         self.clone_url = f'https://{self.vcs_host}{self.repo_path}'
