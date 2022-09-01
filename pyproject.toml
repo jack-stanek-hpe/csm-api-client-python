@@ -2,7 +2,7 @@
 name = "csm-api-client-python"
 version = "1.0.0"
 description = "Python client library for CSM APIs"
-authors = ["Your Name <you@example.com>"]
+authors = ["Ryan Haasken <ryan.haasken@hpe.com>", "Eli Kamin <eli.kamin@hpe.com>", "Jack Stanek <jack.stanek@hpe.com>", "Pat Tovo <pat.tovo@hpe.com"]
 license = "MIT"
 
 [tool.poetry.dependencies]
@@ -17,6 +17,8 @@ requests-oauthlib = "^1.3.1"
 [tool.poetry.dev-dependencies]
 nose2 = "^0.12.0"
 mypy = "^0.971"
+types-PyYAML = "<6.0"
+types-requests = "<3.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
