@@ -31,7 +31,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from tests.common import ExtendedTestCase
-from tests.cli.diag.fakes import (
+from tests.service.fox_fakes import (
     MOCK_FOX_GET_RESPONSE,
     MOCK_FOX_GET_XNAME_RESPONSE,
     MOCK_FOX_JOB_ID,
