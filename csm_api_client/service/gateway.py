@@ -27,6 +27,7 @@ Client for querying the API gateway.
 from functools import wraps
 import logging
 import requests
+from typing import Optional
 from urllib.parse import urlunparse
 
 from csm_api_client.session import Session
@@ -73,14 +74,16 @@ class APIGatewayClient:
     # This can be set in subclasses to make a client for a specific API
     base_resource_path = ''
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, timeout: Optional[int] = None):
         """Initialize the APIGatewayClient.
 
         Args:
             session: The Session instance to use when making REST calls,
                 or None to make connections without a session.
+            host
         """
         self.session = session
+        self.timeout = timeout
 
     def set_timeout(self, timeout):
         self.timeout = timeout
@@ -103,15 +106,14 @@ class APIGatewayClient:
             APIError: if the status code of the response is >= 400 or request
                 raises a RequestException of any kind.
         """
-        url = urlunparse(('https', self.host, 'apis/{}{}'.format(
+        host = self.session.host
+        url = urlunparse(('https', host, 'apis/{}{}'.format(
             self.base_resource_path, '/'.join(args)), '', '', ''))
 
         LOGGER.debug("Issuing %s request to URL '%s'", req_type, url)
 
-        if self.session is None:
-            requester = requests
-        else:
-            requester = self.session.session
+        # Get the OAuth2-authenticated session
+        requester = self.session.session
 
         try:
             if req_type == 'GET':

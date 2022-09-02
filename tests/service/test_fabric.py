@@ -29,6 +29,7 @@ import logging
 import unittest
 from unittest import mock
 
+from csm_api_client.session import Session
 from csm_api_client.service import APIError, APIGatewayClient, FabricControllerClient
 from tests.common import ExtendedTestCase
 
@@ -78,7 +79,8 @@ class TestFabricControllerClient(ExtendedTestCase):
 
         self.mock_fc_get = mock.patch.object(APIGatewayClient, 'get', mock_fc_get).start()
 
-        self.fabric_client = FabricControllerClient()
+        self.mock_session = mock.MagicMock(autospec=Session)
+        self.fabric_client = FabricControllerClient(self.mock_session)
 
         self.fabric_status_fail_msg = 'Failed to get port status for port set fabric-ports'
         self.edge_status_fail_msg = 'Failed to get port status for port set edge-ports'

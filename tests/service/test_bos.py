@@ -35,49 +35,27 @@ from csm_api_client.service.bos import (
 )
 
 
-class BOSClientTestCase(unittest.TestCase):
-    """Base test case for BOS client tests"""
-
-
-class TestBOSClientCommon(BOSClientTestCase):
+class TestBOSClientCommon(unittest.TestCase):
     """Tests for the BOSClientCommon base class"""
 
     def test_get_bos_version_v1(self):
         """Test retrieving a BOSV1Client"""
-        self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock()),
+        self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock(), BOSVersion.V1),
                               BOSV1Client)
 
     def test_get_bos_version_v2(self):
         """Test retrieving a BOSV2Client"""
-        self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock()),
+        self.assertIsInstance(BOSClientCommon.get_bos_client(MagicMock(), BOSVersion.V2),
                               BOSV2Client)
 
     def test_get_invalid_bos_client(self):
         """Test retrieving an invalid BOS client version throws an error"""
         for invalid_bos_version in ['v3', 'foo', 'v0', '']:
             with self.assertRaises(ValueError):
-                BOSClientCommon.get_bos_client(MagicMock())
-
-    def test_get_bos_client_version_kwarg(self):
-        """Test getting a BOSVxClient using the version keyword argument"""
-        for version, client_cls in [('v1', BOSV1Client), ('v2', BOSV2Client)]:
-            with self.subTest(version=version):
-                self.assertIsInstance(
-                    BOSClientCommon.get_bos_client(MagicMock(), version=version),
-                    client_cls
-                )
-
-    def test_get_bos_client_version_kwarg_is_none(self):
-        """Test that the client version is read from config file when version kwarg is None"""
-        for version, client_cls in [('v1', BOSV1Client), ('v2', BOSV2Client)]:
-            with self.subTest(version=version):
-                self.assertIsInstance(
-                    BOSClientCommon.get_bos_client(MagicMock(), version=None),
-                    client_cls
-                )
+                BOSVersion.from_str(invalid_bos_version)
 
 
-class TestBOSV1BaseBootSetData(BOSClientTestCase):
+class TestBOSV1BaseBootSetData(unittest.TestCase):
     """Test BOSV1Client.get_base_boot_set_data() """
 
     def test_bos_v1_client_has_correct_keys(self):
@@ -87,14 +65,14 @@ class TestBOSV1BaseBootSetData(BOSClientTestCase):
             'rootfs_provider_passthrough'
         }
         actual_keys = set(
-            BOSClientCommon.get_bos_client(MagicMock())
+            BOSClientCommon.get_bos_client(MagicMock(), BOSVersion.V1)
             .get_base_boot_set_data()
             .keys()
         )
         self.assertTrue(expected_keys.issubset(actual_keys))
 
 
-class TestBOSV2BaseBootSetData(BOSClientTestCase):
+class TestBOSV2BaseBootSetData(unittest.TestCase):
     """Test BOSV2Client.get_base_boot_set_data() """
 
     def test_bos_v2_client_has_correct_keys(self):
@@ -108,7 +86,7 @@ class TestBOSV2BaseBootSetData(BOSClientTestCase):
             'network',
         }
         actual_keys = set(
-            BOSClientCommon.get_bos_client(MagicMock())
+            BOSClientCommon.get_bos_client(MagicMock(), BOSVersion.V2)
             .get_base_boot_set_data()
             .keys()
         )

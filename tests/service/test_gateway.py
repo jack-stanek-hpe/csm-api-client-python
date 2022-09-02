@@ -29,6 +29,7 @@ import unittest
 
 import requests
 
+from csm_api_client.session import Session
 import csm_api_client.service
 from csm_api_client.service import APIError
 
@@ -40,148 +41,118 @@ def get_http_url_prefix(hostname):
 
 class TestAPIGatewayClient(unittest.TestCase):
     """Tests for the APIGatewayClient class."""
-
-    def test_create_without_host(self):
-        """Test creation of APIGatewayClient w/o host."""
-        default_host = 'default-api-gw'
-        client = csm_api_client.service.APIGatewayClient()
-
-        self.assertEqual(client.host, default_host)
-
-    def test_create_with_host(self):
-        """Test creation of APIGatewayClient w/ host."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
-        self.assertEqual(client.host, api_gw_host)
-
-    def test_configured_timeout(self):
-        """Make sure the API client timeout is configurable by the config file."""
-        for configured_timeout in range(10, 60, 10):
-            mock_config.return_value = configured_timeout
-            client = csm_api_client.service.APIGatewayClient()
-            self.assertEqual(client.timeout, configured_timeout)
+    def setUp(self):
+        self.api_gw_host = 'my-api-gw'
+        self.mock_session = mock.MagicMock(autospec=Session, host=self.api_gw_host)
 
     def test_setting_timeout_with_constructor(self):
         """Test setting the API client timeout with the constructor argument."""
-        client = csm_api_client.service.APIGatewayClient(timeout=60)
-        self.assertEqual(client.timeout, 60)
+        for timeout in range(10, 60, 10):
+            with self.subTest(timeout=timeout):
+                client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=timeout)
+                self.assertEqual(client.timeout, timeout)
 
-    @mock.patch('requests.get')
-    def test_get_no_params(self, mock_requests_get):
+    def test_get_no_params(self):
         """Test get method with no additional params."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=60)
         path_components = ['foo', 'bar', 'baz']
         response = client.get(*path_components)
 
-        mock_requests_get.assert_called_once_with(
-            get_http_url_prefix(api_gw_host) + '/'.join(path_components),
-            params=None, verify=True, timeout=60
+        self.mock_session.session.get.assert_called_once_with(
+            get_http_url_prefix(self.api_gw_host) + '/'.join(path_components),
+            params=None, timeout=60
         )
-        self.assertEqual(response, mock_requests_get.return_value)
+        self.assertEqual(response, self.mock_session.session.get.return_value)
 
-    @mock.patch('requests.get')
-    def test_get_with_params(self, mock_requests_get):
+    def test_get_with_params(self):
         """Test get method with additional params."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+
+        client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=60)
         path_components = ['People']
         params = {'name': 'ryan'}
         response = client.get(*path_components, params=params)
 
-        mock_requests_get.assert_called_once_with(
-            get_http_url_prefix(api_gw_host) + '/'.join(path_components),
-            params=params, verify=True, timeout=60
+        self.mock_session.session.get.assert_called_once_with(
+            get_http_url_prefix(self.api_gw_host) + '/'.join(path_components),
+            params=params, timeout=60
         )
-        self.assertEqual(response, mock_requests_get.return_value)
+        self.assertEqual(response, self.mock_session.session.get.return_value)
 
-    @mock.patch('requests.get', side_effect=requests.exceptions.RequestException)
-    def test_get_exception(self, _):
+    def test_get_exception(self):
         """Test get method with exception during GET."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
+        self.mock_session.session.get.side_effect = requests.exceptions.RequestException
         path_components = ['foo', 'bar', 'baz']
         with self.assertRaises(csm_api_client.service.APIError):
             client.get(*path_components)
 
-    @mock.patch('requests.post')
-    def test_post(self, mock_requests_post):
+    def test_post(self):
         """Test post method."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=60)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         response = client.post(*path_components, payload=payload)
 
-        mock_requests_post.assert_called_once_with(
-            get_http_url_prefix(api_gw_host) + '/'.join(path_components),
-            data=payload, verify=True, json=None, timeout=60
+        self.mock_session.session.post.assert_called_once_with(
+            get_http_url_prefix(self.api_gw_host) + '/'.join(path_components),
+            data=payload, json=None, timeout=60
         )
-        self.assertEqual(response, mock_requests_post.return_value)
+        self.assertEqual(response, self.mock_session.session.post.return_value)
 
-    @mock.patch('requests.post', side_effect=requests.exceptions.RequestException)
-    def test_post_exception(self, _):
+    def test_post_exception(self):
         """Test post method with exception during POST."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        self.mock_session.session.post.side_effect = requests.exceptions.RequestException
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         with self.assertRaises(csm_api_client.service.APIError):
             client.post(*path_components, payload=payload)
 
-    @mock.patch('requests.put')
-    def test_put(self, mock_requests_put):
+    def test_put(self):
         """Test put method."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=60)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         client.put(*path_components, payload=payload)
 
-        mock_requests_put.assert_called_once_with(
-            get_http_url_prefix(api_gw_host) + '/'.join(path_components),
-            data=payload, verify=True, timeout=60, json=None
+        self.mock_session.session.put.assert_called_once_with(
+            get_http_url_prefix(self.api_gw_host) + '/'.join(path_components),
+            data=payload, json=None, timeout=60
         )
 
-    @mock.patch('requests.put', side_effect=requests.exceptions.RequestException)
-    def test_put_exception(self, _):
+    def test_put_exception(self):
         """Test put method with exception during PUT."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        self.mock_session.session.put.side_effect = requests.exceptions.RequestException
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path_components = ['foo', 'bar', 'baz']
         payload = {}
         with self.assertRaises(csm_api_client.service.APIError):
             client.put(*path_components, payload=payload)
 
-    @mock.patch('requests.delete')
-    def test_delete(self, mock_requests_delete):
+    def test_delete(self):
         """Test delete method."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session, timeout=60)
         path_components = ['foo', 'bar', 'baz']
         response = client.delete(*path_components)
 
-        mock_requests_delete.assert_called_once_with(
-            get_http_url_prefix(api_gw_host) + '/'.join(path_components),
-            verify=True, timeout=60
+        self.mock_session.session.delete.assert_called_once_with(
+            get_http_url_prefix(self.api_gw_host) + '/'.join(path_components), timeout=60
         )
-        self.assertEqual(response, mock_requests_delete.return_value)
+        self.assertEqual(response, self.mock_session.session.delete.return_value)
 
-    @mock.patch('requests.delete', side_effect=requests.exceptions.RequestException)
-    def test_delete_exception(self, _):
+    def test_delete_exception(self):
         """Test delete method with exception during DELETE."""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        self.mock_session.session.delete.side_effect = requests.exceptions.RequestException
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path_components = ['foo', 'bar', 'baz']
         with self.assertRaises(csm_api_client.service.APIError):
             client.delete(*path_components)
 
     def test_request_failed_with_problem_description(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and additional problem details"""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path = 'fail'
-        expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
+        expected_url = f'{get_http_url_prefix(self.api_gw_host)}{path}'
         status_code = 400
         reason = 'Bad Request'
         problem_title = 'Title of problem'
@@ -190,65 +161,60 @@ class TestAPIGatewayClient(unittest.TestCase):
         verbs_to_test = ['get', 'post', 'put', 'patch', 'delete']
         for verb in verbs_to_test:
             with self.subTest(verb=verb):
-                with mock.patch(f'requests.{verb}') as mock_request_func:
-                    mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
-                    mock_response.json.return_value = {
-                        'title': problem_title,
-                        'detail': problem_detail
-                    }
-                    mock_request_func.return_value = mock_response
+                mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
+                mock_response.json.return_value = {
+                    'title': problem_title,
+                    'detail': problem_detail
+                }
+                setattr(self.mock_session.session, verb, mock.Mock(return_value=mock_response))
 
-                    err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with status "
-                                 f"code {status_code}: {reason}. {problem_title} Detail: {problem_detail}")
+                err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with status "
+                             f"code {status_code}: {reason}. {problem_title} Detail: {problem_detail}")
 
-                    with self.assertRaisesRegex(APIError, err_regex):
-                        getattr(client, verb)(path)
+                with self.assertRaisesRegex(APIError, err_regex):
+                    getattr(client, verb)(path)
 
     def test_request_failed_no_problem_description(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and no problem details"""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path = 'fail'
-        expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
+        expected_url = f'{get_http_url_prefix(self.api_gw_host)}{path}'
         status_code = 400
         reason = 'Bad Request'
 
         verbs_to_test = ['get', 'post', 'put', 'patch', 'delete']
         for verb in verbs_to_test:
             with self.subTest(verb=verb):
-                with mock.patch(f'requests.{verb}') as mock_request_func:
-                    mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
-                    mock_response.json.return_value = {}
-                    mock_request_func.return_value = mock_response
+                mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
+                mock_response.json.return_value = {}
+                setattr(self.mock_session.session, verb, mock.Mock(return_value=mock_response))
 
-                    err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with "
-                                 f"status code {status_code}: {reason}")
+                err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with "
+                             f"status code {status_code}: {reason}")
 
-                    with self.assertRaisesRegex(APIError, err_regex):
-                        getattr(client, verb)(path)
+                with self.assertRaisesRegex(APIError, err_regex):
+                    getattr(client, verb)(path)
 
     def test_request_failed_invalid_json_response(self):
         """Test get, post, put, patch, and delete with fail HTTP codes and response not valid JSON"""
-        api_gw_host = 'my-api-gw'
-        client = csm_api_client.service.APIGatewayClient(host=api_gw_host)
+        client = csm_api_client.service.APIGatewayClient(self.mock_session)
         path = 'fail'
-        expected_url = f'{get_http_url_prefix(api_gw_host)}{path}'
+        expected_url = f'{get_http_url_prefix(self.api_gw_host)}{path}'
         status_code = 400
         reason = 'Bad Request'
 
         verbs_to_test = ['get', 'post', 'put', 'patch', 'delete']
         for verb in verbs_to_test:
             with self.subTest(verb=verb):
-                with mock.patch(f'requests.{verb}') as mock_request_func:
-                    mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
-                    mock_response.json.side_effect = ValueError
-                    mock_request_func.return_value = mock_response
+                mock_response = mock.Mock(ok=False, status_code=status_code, reason=reason)
+                mock_response.json.side_effect = ValueError
+                setattr(self.mock_session.session, verb, mock.Mock(return_value=mock_response))
 
-                    err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with "
-                                 f"status code {status_code}: {reason}")
+                err_regex = (f"{verb.upper()} request to URL '{expected_url}' failed with "
+                             f"status code {status_code}: {reason}")
 
-                    with self.assertRaisesRegex(APIError, err_regex):
-                        getattr(client, verb)(path)
+                with self.assertRaisesRegex(APIError, err_regex):
+                    getattr(client, verb)(path)
 
 
 if __name__ == '__main__':

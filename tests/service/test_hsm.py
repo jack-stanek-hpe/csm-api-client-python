@@ -29,6 +29,7 @@ import logging
 import unittest
 from unittest import mock
 
+from csm_api_client.session import Session
 from csm_api_client.service import APIError, APIGatewayClient, HSMClient
 from tests.common import ExtendedTestCase
 
@@ -49,7 +50,8 @@ class TestHSMClient(unittest.TestCase):
             'Components': self.components
         }
 
-        self.hsm_client = HSMClient()
+        self.mock_session = mock.MagicMock(autospec=Session)
+        self.hsm_client = HSMClient(self.mock_session)
 
     def tearDown(self):
         mock.patch.stopall()
@@ -157,7 +159,8 @@ class TestHSMClientRedfishEndpoints(ExtendedTestCase):
                 }
             ]
         }
-        self.hsm_client = HSMClient()
+        self.mock_session = mock.MagicMock(autospec=Session)
+        self.hsm_client = HSMClient(self.mock_session)
 
     def tearDown(self):
         """Stop patches."""

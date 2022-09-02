@@ -26,7 +26,6 @@ Client for querying the Boot Orchestration Service (BOS) API
 """
 import enum
 import logging
-from typing import Optional
 
 from csm_api_client.session import Session
 from csm_api_client.service.gateway import APIError, APIGatewayClient
@@ -41,11 +40,27 @@ class BOSVersion(enum.Enum):
     V2 = 'v2'
 
     @classmethod
-    def from_str(cls, strval: str) -> Optional['BOSVersion']:
-        return {
+    def from_str(cls, version_str: str) -> 'BOSVersion':
+        """Convert a str to a BOSVersion.
+
+        Args:
+            version_str: some string representing a BOS version
+
+        Returns:
+            the BOSVersion represented by the string
+
+        Raises:
+            ValueError: if the string is not a valid version
+        """
+        version = {
             'v1': cls.V1,
             'v2': cls.V2,
-        }.get(strval.lower())
+        }.get(version_str.lower())
+
+        if not version:
+            raise ValueError(f'Invalid BOS version {version_str}')
+
+        return version
 
 
 class BOSClientCommon(APIGatewayClient):

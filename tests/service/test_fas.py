@@ -32,6 +32,7 @@ import logging
 import unittest
 from unittest.mock import call, Mock, patch
 
+from csm_api_client.session import Session
 from csm_api_client.service import APIError, APIGatewayClient
 from csm_api_client.service.fas import _DateTimeEncoder, FASClient, _now_and_later
 from csm_api_client.xname import XName
@@ -112,7 +113,8 @@ class TestFASClient(ExtendedTestCase):
 
     def setUp(self):
         """Set up some mocks."""
-        self.fas_client = FASClient(session=Mock(), host=Mock(), cert_verify=True)
+        self.mock_session = Mock(autospec=Session)
+        self.fas_client = FASClient(self.mock_session)
         self.fas_firmware_devices = copy.deepcopy(FAS_FIRMWARE_DEVICES)
         self.fas_snapshots = {'snapshots': [{'name': name} for name in self.fas_firmware_devices]}
         self.fas_actions = copy.deepcopy(FAS_ACTIONS)

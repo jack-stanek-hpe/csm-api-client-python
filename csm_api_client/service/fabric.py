@@ -92,7 +92,7 @@ class FabricControllerClient(APIGatewayClient):
 
         for port in port_states:
             port_xname = port.get('xname')
-            port_enabled = get_val_by_path(port, 'status.enable')
+            port_enabled = get_val_by_path(port, 'status.enable', None)
             if port_xname is None or port_enabled is None:
                 LOGGER.warning(f'Unable to get xname and/or enabled status of port '
                                f'from port entry: {port}')
