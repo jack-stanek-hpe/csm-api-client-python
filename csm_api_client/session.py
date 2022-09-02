@@ -30,6 +30,7 @@ import json
 import logging
 import os.path
 import os
+from typing import Dict, Optional
 
 from oauthlib.oauth2 import (UnauthorizedClientError, MissingTokenError,
                              InvalidGrantError, LegacyApplicationClient)
@@ -47,7 +48,7 @@ class Session:
     client_id = 'shasta'
 
     def __init__(self, host: str, cert_verify: bool, username: str, token_filename: str,
-                 no_unauth_warn=False):
+                 no_unauth_warn=False) -> None:
         """Initialize a Session. Wraps an OAuth2Session.
 
         Parameter management. Initialization of the OAuth2Session passes to
@@ -82,7 +83,7 @@ class Session:
         self.session = OAuth2Session(client=client, token=token, **opts)
 
     @cached_property
-    def token(self):
+    def token(self) -> Optional[Dict[str, str]]:
         """dict: Deserialized authentication token.
         """
 
@@ -104,7 +105,7 @@ class Session:
 
         return token
 
-    def save(self):
+    def save(self) -> None:
         """Serializes an authentication token.
 
         Tokens are stored with read permissions revoked for anyone
@@ -124,17 +125,14 @@ class Session:
         print(f'INFO: Saved auth token to: {self.token_filename}')
 
     @property
-    def token_url(self):
+    def token_url(self) -> str:
         return 'https://{}{}'.format(self.host, self.TOKEN_URI.format(self.tenant))
 
-    def fetch_token(self, password):
+    def fetch_token(self, password: str) -> None:
         """Fetch a new authentication token.
 
         Args:
-            password (str): password
-
-        Returns:
-            token (dict): Authentication token
+            password: user password for authentication
         """
 
         opts = dict(client_id=self.client_id, verify=self.cert_verify)

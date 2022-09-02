@@ -117,21 +117,17 @@ class APIGatewayClient:
 
         try:
             if req_type == 'GET':
-                r = requester.get(url, params=req_param, verify=self.cert_verify, timeout=self.timeout)
+                r = requester.get(url, params=req_param, timeout=self.timeout)
             elif req_type == 'STREAM':
-                r = requester.get(url, params=req_param, stream=True,
-                                  verify=self.cert_verify, timeout=self.timeout)
+                r = requester.get(url, params=req_param, stream=True, timeout=self.timeout)
             elif req_type == 'POST':
-                r = requester.post(url, data=req_param, verify=self.cert_verify,
-                                   json=json, timeout=self.timeout)
+                r = requester.post(url, data=req_param, json=json, timeout=self.timeout)
             elif req_type == 'PUT':
-                r = requester.put(url, data=req_param, verify=self.cert_verify,
-                                  json=json, timeout=self.timeout)
+                r = requester.put(url, data=req_param, json=json, timeout=self.timeout)
             elif req_type == 'PATCH':
-                r = requester.patch(url, data=req_param, verify=self.cert_verify,
-                                    json=json, timeout=self.timeout)
+                r = requester.patch(url, data=req_param, json=json, timeout=self.timeout)
             elif req_type == 'DELETE':
-                r = requester.delete(url, verify=self.cert_verify, timeout=self.timeout)
+                r = requester.delete(url, timeout=self.timeout)
             else:
                 # Internal error not expected to occur.
                 raise ValueError("Request type '{}' is invalid.".format(req_type))

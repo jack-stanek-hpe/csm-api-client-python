@@ -33,6 +33,13 @@ import json
 import logging
 import os
 from tempfile import TemporaryDirectory
+from typing import (
+    Dict,
+    Iterable,
+    Optional,
+    Set,
+    Tuple,
+)
 import warnings
 
 import boto3
@@ -40,10 +47,15 @@ from boto3.exceptions import Boto3Error
 from inflect import engine
 from kubernetes.client import ApiException, CoreV1Api
 from kubernetes.config import load_kube_config, ConfigException
+from mypy_boto3_s3.service_resource import (
+    Object as S3Object,
+    S3ServiceResource,
+)
 from urllib3.exceptions import InsecureRequestWarning
 from yaml import YAMLLoadWarning
 
 from csm_api_client.service.gateway import APIGatewayClient, APIError
+from csm_api_client.session import Session
 from csm_api_client.util import get_val_by_path
 
 LOGGER = logging.getLogger(__name__)
@@ -55,15 +67,15 @@ class IMSClient(APIGatewayClient):
     # The bucket for boot images created by IMS
     boot_images_bucket = 'boot-images'
 
-    def __init__(self, s3_endpoint: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, s3_endpoint: str, session: Session, timeout: Optional[int] = None) -> None:
+        super().__init__(session, timeout)
         # Dictionary to cache the list of different types of resources from IMS
-        self._cached_resources = {}
+        self._cached_resources: Dict[str, Dict] = {}
         self.inflector = engine()
         self.s3_endpoint = s3_endpoint
 
     @cached_property
-    def s3_credentials(self):
+    def s3_credentials(self) -> Tuple[str, str]:
         """Get the IMS s3 credentials from a kubernetes secret.
 
         TODO (CRAYSAT-1267): Remove manual image rename code once one of these is done:
@@ -94,13 +106,16 @@ class IMSClient(APIGatewayClient):
             raise APIError(f'Failed to read ims-s3-credentials secret'
                            f'which is required to rename an image: {err}')
 
+        if not secret.data:
+            raise APIError('No data in "ims-s3-credentials" secret in "ims" namespace')
+
         return (
             base64.b64decode(secret.data['access_key']).decode(),
             base64.b64decode(secret.data['secret_key']).decode(),
         )
 
     @cached_property
-    def s3_resource(self):
+    def s3_resource(self) -> S3ServiceResource:
         """Helper function to load the S3 API from configuration variables.
 
         Returns:
@@ -124,11 +139,11 @@ class IMSClient(APIGatewayClient):
         except Boto3Error as err:
             raise APIError(f'Unable to get S3 resource: {err}')
 
-    def _get_resources_cached(self, resource_type):
+    def _get_resources_cached(self, resource_type: str) -> Dict:
         """Get the resources of the given type from the cache or from IMS API if not cached.
 
         Args:
-            resource_type (str): The type of the resource to look for in IMS.
+            resource_type: The type of the resource to look for in IMS.
                 Must be one of `IMSClient.valid_resource_types`.
 
         Raises:
@@ -158,11 +173,11 @@ class IMSClient(APIGatewayClient):
         else:
             return cached_value
 
-    def clear_resource_cache(self, resource_type=None):
+    def clear_resource_cache(self, resource_type: Optional[str] = None) -> None:
         """Clear the cached copy of the resources of the given type.
 
         Args:
-            resource_type (str): the type of resource for which to clear the
+            resource_type: the type of resource for which to clear the
                 cache. Must be one of `IMSClient.valid_resource_types`. If not
                 specified, the cache for all resource types will be cleared.
 
@@ -178,16 +193,21 @@ class IMSClient(APIGatewayClient):
         elif resource_type in self._cached_resources:
             del self._cached_resources[resource_type]
 
-    def get_matching_resources(self, resource_type, resource_id=None, **kwargs):
+    def get_matching_resources(
+        self,
+        resource_type: str,
+        resource_id: Optional[str] = None,
+        **kwargs: str
+    ) -> Iterable[Dict]:
         """Get the resource(s) matching the given type and id or name.
 
         If neither `resource_id` nor `name` are specified, then return all the
         resources of the given type.
 
         Args:
-            resource_type (str): The type of the resource to look for in IMS.
+            resource_type: The type of the resource to look for in IMS.
                 Must be one of 'image', 'recipe', or 'public-key'
-            resource_id (str): The uid of the resource to look for in IMS.
+            resource_id: The uid of the resource to look for in IMS.
                 if this is specified, anything in **kwargs is ignored.
             **kwargs: Additional properties to match against the existing
                 resources. These can be any property of the resource, e.g.
@@ -225,12 +245,12 @@ class IMSClient(APIGatewayClient):
                 if all(resource.get(prop) == value
                        for prop, value in kwargs.items())]
 
-    def create_public_key(self, name, public_key):
+    def create_public_key(self, name: str, public_key: str) -> Dict:
         """Create a new public key record in IMS.
 
         Args:
-            name (str): the name of the public key record to create in IMS
-            public_key (str): the full public key
+            name: the name of the public key record to create in IMS
+            public_key: the full public key
 
         Returns:
             dict: the created IMS public key record
@@ -247,13 +267,13 @@ class IMSClient(APIGatewayClient):
             raise APIError(f'Failed to parse JSON response from creating new '
                            f'public key with name "{name}": {err}')
 
-    def create_image_build_job(self, image_name, recipe_id, public_key_id):
+    def create_image_build_job(self, image_name: str, recipe_id: str, public_key_id: str) -> Dict:
         """Create an IMS job to build an image from a recipe.
 
         Args:
-            image_name (str): the name of the image to create
-            recipe_id (str): the id of the IMS recipe to build into an image
-            public_key_id (str): the id of the SSH public key stored in IMS to
+            image_name: the name of the image to create
+            recipe_id: the id of the IMS recipe to build into an image
+            public_key_id: the id of the SSH public key stored in IMS to
                 use for passwordless SSH into the IMS debug or configuration
                 shell.
 
@@ -277,11 +297,14 @@ class IMSClient(APIGatewayClient):
         except ValueError as err:
             raise APIError(f'Failed to decode JSON from IMS job creation response: {err}')
 
-    def get_job(self, job_id):
+    def get_job(self, job_id: str) -> Dict:
         """Get an IMS job.
 
         Args:
-            job_id (str): the job ID
+            job_id: the job ID
+
+        Returns:
+            dict: The
         """
         try:
             return self.get('jobs', job_id).json()
@@ -290,11 +313,11 @@ class IMSClient(APIGatewayClient):
         except ValueError as err:
             raise APIError(f'Failed to parse JSON response for job {job_id}: {err}')
 
-    def get_image(self, image_id):
+    def get_image(self, image_id: str) -> Dict:
         """Get an IMS image directly by its ID.
 
         Args:
-            image_id (str): the image ID
+            image_id: the image ID
         """
         try:
             return self.get('images', image_id).json()
@@ -303,11 +326,11 @@ class IMSClient(APIGatewayClient):
         except ValueError as err:
             raise APIError(f'Failed to parse JSON response for image {image_id}: {err}')
 
-    def create_empty_image(self, name):
+    def create_empty_image(self, name: str) -> Dict:
         """Create a new empty image record in IMS that has no link data yet.
 
         Args:
-            name (str): the name of the image record to create
+            name: the name of the image record to create
 
         Returns:
             dict: the created image record
@@ -325,11 +348,11 @@ class IMSClient(APIGatewayClient):
                            f'image named {name}: {err}')
 
     @staticmethod
-    def split_s3_artifact_path(path):
+    def split_s3_artifact_path(path: str) -> Tuple[str, str]:
         """Split a path to an artifact in S3 into its bucket and path components.
 
         Args:
-            path (str): An artifact path in the format stored by IMS, e.g.
+            path: An artifact path in the format stored by IMS, e.g.
                 s3://boot-images/<UUID>/rootfs
 
         Returns:
@@ -337,13 +360,14 @@ class IMSClient(APIGatewayClient):
                 object in that bucket, e.g. ('boot-images', '<UUID>/rootfs').
         """
         _, bucket_path = path.split('://')
-        return bucket_path.split('/', maxsplit=1)
+        bucket_name, obj_path = bucket_path.split('/', maxsplit=1)
+        return bucket_name, obj_path  # convince mypy that this is in fact a 2-tuple
 
-    def get_image_manifest(self, image_id):
+    def get_image_manifest(self, image_id: str) -> Optional[Dict]:
         """Get the contents of the image manifest for the given image.
 
         Args:
-            image_id (str): the ID of the image to get the manifest for
+            image_id: the ID of the image to get the manifest for
 
         Returns:
             dict or None: the manifest for the given image or None if the image
@@ -383,14 +407,14 @@ class IMSClient(APIGatewayClient):
                 raise APIError(f'Failed to parse JSON manifest file for image '
                                f'with id {image_id}: {err}')
 
-    def copy_manifest_artifacts(self, manifest, new_image_id, new_name):
+    def copy_manifest_artifacts(self, manifest: Dict, new_image_id: str, new_name: str) -> Dict:
         """Copy artifacts specified in a manifest to a location for use by a new image.
 
         Args:
-            manifest (dict): an IMS image manifest
-            new_image_id (str): the image ID of the new manifest. This image ID
+            manifest: an IMS image manifest
+            new_image_id: the image ID of the new manifest. This image ID
                 will be used in the s3 key for each new artifact.
-            new_name (str): the name of the new IMS image. This is placed in the
+            new_name: the name of the new IMS image. This is placed in the
                 metadata of each artifact
 
         Returns:
@@ -401,7 +425,8 @@ class IMSClient(APIGatewayClient):
         """
         old_artifacts = manifest.get('artifacts', [])
 
-        artifact_types = set(get_val_by_path(artifact, 'link.type') for artifact in old_artifacts)
+        artifact_types: Set[str] = set((atype := get_val_by_path(artifact, 'link.type')) for artifact in old_artifacts
+                                       if atype is not None)
         unrecognized_types = artifact_types - {'s3'}
         if unrecognized_types:
             raise APIError(f'Unable to copy unrecognized artifact types: '
@@ -456,7 +481,7 @@ class IMSClient(APIGatewayClient):
             'version': manifest['version']
         }
 
-    def upload_image_manifest(self, image_id, manifest):
+    def upload_image_manifest(self, image_id: str, manifest: Dict) -> S3Object:
         """Upload the image manifest to S3 for the given image ID.
 
         Args:
@@ -497,7 +522,7 @@ class IMSClient(APIGatewayClient):
             LOGGER.debug(f'Created new S3 manifest object: {manifest_object}')
             return manifest_object
 
-    def copy_image(self, image_id, new_name):
+    def copy_image(self, image_id: str, new_name: str) -> str:
         """Make a deep copy of an image.
 
         This is a deep copy in that it examines the manifest file of the image
@@ -506,8 +531,8 @@ class IMSClient(APIGatewayClient):
         then uploads that new manifest to S3.
 
         Args:
-            image_id (str): the ID of the image to be copied
-            new_name (str): the new copied image name
+            image_id: the ID of the image to be copied
+            new_name: the new copied image name
 
         Returns:
             str: the image ID of the newly created image
@@ -558,7 +583,7 @@ class IMSClient(APIGatewayClient):
 
         return new_image_id
 
-    def delete_image(self, image_id, permanent=False):
+    def delete_image(self, image_id: str, permanent: bool = False) -> None:
         """Delete an image.
 
         Args:
@@ -583,7 +608,7 @@ class IMSClient(APIGatewayClient):
             raise APIError(f'Failed to permanently delete image with id {image_id}: {err}')
 
     # TODO (CRAYSAT-1267): Once CASMCMS-7634 is resolved, simplify this to be a PATCH request
-    def rename_image(self, image_id, new_name):
+    def rename_image(self, image_id: str, new_name: str) -> str:
         """Rename an image by performing a deep copy and then delete.
 
         The IMS API does not currently support renaming an image, so this is

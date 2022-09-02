@@ -25,11 +25,31 @@
 Contains structures and code that are generally useful the API client implementation.
 """
 
-from typing import Any, Optional
+from typing import (
+    Any,
+    Mapping,
+    Optional,
+    TypeVar,
+    Union
+)
 
 
-def get_val_by_path(dict_val: dict, dotted_path: str, default_value: Optional[Any]) -> Any:
-    """Get a value from a dictionary based on a dotted path.
+T = TypeVar('T')
+
+# The following recursive type alias requires the upcoming
+# `--enable-recursive-aliases` option. It is more correct than the type alias
+# which uses a Mapping instead of a NestedMap, but is not supported by mypy
+# yet.
+# NestedMap = Mapping[str, Union[T, 'NestedMap']]
+NestedMap = Mapping[str, Union[T, Mapping]]
+
+
+def get_val_by_path(
+    mapping: NestedMap,
+    dotted_path: str,
+    default_value: Optional[T] = None
+) -> Optional[Union[T, NestedMap]]:
+    """Get a value from a mapping (e.g. dict) based on a dotted path.
 
     For example, if `dict_val` is as follows:
 
@@ -43,7 +63,7 @@ def get_val_by_path(dict_val: dict, dotted_path: str, default_value: Optional[An
     like get_val_by_path(dict_val, 'no.such.keys') would return None.
 
     Args:
-        dict_val (dict): The dictionary in which to search for the dotted path.
+        mapping: The dictionary in which to search for the dotted path.
         dotted_path (str): The dotted path to look for in the dictionary. The
             dot character, '.', separates the keys to use when traversing a
             nested dictionary.
@@ -54,8 +74,12 @@ def get_val_by_path(dict_val: dict, dotted_path: str, default_value: Optional[An
         The value that exists at the dotted path or `default_value` if no such
         path exists in `dict_val`.
     """
-    current_val = dict_val
-    for key in dotted_path.split('.'):
+    keys = dotted_path.split('.')
+    if not keys:
+        raise ValueError(f'Invalid dotted_path "{dotted_path}"')
+
+    current_val = mapping
+    for key in keys:
         if current_val and key in current_val:
             current_val = current_val[key]
         else:
@@ -63,7 +87,7 @@ def get_val_by_path(dict_val: dict, dotted_path: str, default_value: Optional[An
     return current_val
 
 
-def set_val_by_path(dict_val: dict, dotted_path: str, value: Any):
+def set_val_by_path(dict_val: dict, dotted_path: str, value: Any) -> None:
     """Set a value in a dictionary using a dotted path.
 
     If any values along the path are not a dictionary, this will overwrite those
